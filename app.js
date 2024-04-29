@@ -1,41 +1,44 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+const express = require('express')
+const Sequelize = require('sequelize')
+const app = express()
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+//definimos los parametros de conexion 
+const sequelize = new Sequelize('data','root','',{
+    host:'localhost',
+    dialect:'mysql'
+})
 
-var app = express();
+//definimos el modelo
+const clientesModel = sequelize.define('clientes',{
+    "id":{ type: Sequelize.INTEGER, primaryKey: true},
+    "nomcli":Sequelize.STRING,
+    "apecli":Sequelize.STRING,
+    "nrodnicli":Sequelize.STRING,
+    "telcli":Sequelize.STRING
+})
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'hbs');
+//autentificamos
+sequelize.authenticate()
+.then(()=>{
+    console.log('Conexion a la base de datos Ok')
+})
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+.catch(error =>{
+    console.log('error de conexion a la base de datos', error)
+})
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+//mostramos todos los registros
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
-});
+clientesModel.findAll({attributes:['id','nomcli','apecli','nrodnicli','telcli']})
+.then(clientes=>{
+    const resultados=JSON.stringify(clientes)
+    console.log(resultados)
+})
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+.catch(error =>{
+    console.log('No hay registros' + error)
+})
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-module.exports = app;
+app.listen(3000, ()=>{
+    console.log('conectado')
+})
